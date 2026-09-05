@@ -144,7 +144,28 @@ test('fetchPlaylist explains an unreadable page rather than returning nothing', 
 
 test('fetchPlaylist explains an empty or private playlist', async () => {
   const empty = '<html><body><script>var ytInitialData = {"contents":{}};</script></body></html>';
-  await assert.rejects(run(stubFetch({ page: empty })), /private, deleted, or empty/);
+  await assert.rejects(run(stubFetch({ page: empty })), /private\/deleted\/empty/);
+});
+
+test('a continuation that leads nowhere still ends in the same clear error', async () => {
+  // The bug this guards against: page one has no videos but does carry a
+  // continuation token (e.g. a consent/interstitial page's own internal
+  // token), page two also turns up nothing, and the old code accepted that
+  // silently — an "added" playlist whose index is actually empty, which
+  // hard-blocks every video in it with no visible error anywhere.
+  const emptyWithContinuation = {
+    onResponseReceivedActions: [
+      { appendContinuationItemsAction: { continuationItems: [] } },
+    ],
+  };
+  const page = PAGE_HTML.replace(
+    /"playlistVideoRenderer":\{"videoId":"[a-z0-9]+"/g,
+    '"someOtherRenderer":{"videoId":"unused0001"'
+  );
+  await assert.rejects(
+    run(stubFetch({ page, pages: [emptyWithContinuation] })),
+    /No videos found after reading 2 page/
+  );
 });
 
 test('a continuation failure yields partial data flagged as truncated', async () => {

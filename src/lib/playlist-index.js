@@ -172,13 +172,6 @@
       }
 
       var first = collectFromResponse(data);
-      if (!first.videoIds.length && !first.continuation) {
-        throw new Error(
-          'No videos found. The playlist may be private, deleted, or empty. ' +
-          'Private playlists only index while you are signed in to this browser profile.'
-        );
-      }
-
       var config = extractInnertubeConfig(html);
       var state = {
         listId: listId,
@@ -200,6 +193,21 @@
 
       return pageThrough(state, first.continuation, config, doFetch, maxPages, pageDelay);
     }).then(function (state) {
+      if (!state.videoIds.length) {
+        // Checked once, after all paging is done, rather than only on page one:
+        // a page can carry a continuation token that leads nowhere (e.g. a
+        // consent/interstitial page's own "reload" token) and still end with
+        // zero real videos. Silently accepting that would leave a playlist
+        // looking "added" in the options page while its index is empty,
+        // hard-blocking every video in it without any visible error.
+        throw new Error(
+          'No videos found after reading ' + state.pages + ' page(s). This usually means ' +
+          'either the playlist is private/deleted/empty, or YouTube served a consent or ' +
+          'sign-in interstitial instead of the real playlist page (common when fetching ' +
+          'without browser cookies, e.g. from a plain script or a signed-out session). ' +
+          'Private playlists only index while you are signed in to this browser profile.'
+        );
+      }
       return {
         listId: state.listId,
         title: state.title,
