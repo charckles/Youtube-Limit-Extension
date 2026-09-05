@@ -7,6 +7,7 @@ const indexer = require('../src/lib/playlist-index.js');
 const fixture = (name) => fs.readFileSync(path.join(__dirname, 'fixtures', name), 'utf8');
 const PAGE_HTML = fixture('playlist-page.html');
 const CONTINUATION = JSON.parse(fixture('continuation-response.json'));
+const LOCKUP_PAGE_HTML = fixture('playlist-page-lockup.html');
 
 const PAGE_ONE = ['aaaaaaaaaa1', 'bbbbbbbbbb2', 'cccccccccc3', 'dddddddddd4', 'eeeeeeeeee5'];
 
@@ -60,6 +61,35 @@ test('collectFromResponse handles the continuation response shape', () => {
   const got = indexer.collectFromResponse(CONTINUATION);
   assert.deepEqual(got.videoIds, ['ffffffffff6', 'gggggggggg7', 'aaaaaaaaaa1']);
   assert.equal(got.continuation, null, 'the last page has no token');
+});
+
+test('collectFromResponse reads the lockupViewModel shape YouTube switched to in 2025', () => {
+  // Confirmed against a real playlist fetch: playlistVideoRenderer is gone,
+  // replaced by lockupViewModel with the video id under contentId instead of
+  // videoId. This is the fixture form of the bug that shipped zero videos.
+  const got = indexer.collectFromResponse(indexer.extractYtInitialData(LOCKUP_PAGE_HTML));
+  assert.deepEqual(got.videoIds, PAGE_ONE);
+  assert.equal(got.continuation, 'CONTINUATION_TOKEN_PAGE_2');
+});
+
+test('lockupViewModel items are not confused by their own nested command videoIds', () => {
+  // Each real item carries the same id 3-4 times more under watchEndpoint,
+  // addToPlaylistCommand, and offlineVideoEndpoint. Only contentId on the
+  // lockupViewModel itself should ever produce an entry — anything else means
+  // either duplicates or, worse, ids belonging to unrelated commands.
+  const got = indexer.collectFromResponse(indexer.extractYtInitialData(LOCKUP_PAGE_HTML));
+  assert.equal(got.videoIds.length, PAGE_ONE.length);
+  assert.equal(new Set(got.videoIds).size, PAGE_ONE.length, 'no duplicates');
+});
+
+test('a lockupViewModel for a non-video content type is ignored', () => {
+  // The same component renders channels and playlists elsewhere on YouTube
+  // (LOCKUP_CONTENT_TYPE_CHANNEL, _PLAYLIST); contentType must be checked so
+  // an unrelated id never gets treated as a whitelisted video.
+  const got = indexer.collectFromResponse({
+    contents: [{ lockupViewModel: { contentId: 'notAVideoId', contentType: 'LOCKUP_CONTENT_TYPE_CHANNEL' } }],
+  });
+  assert.deepEqual(got.videoIds, []);
 });
 
 test('collectFromResponse understands the legacy continuation shape', () => {
@@ -129,6 +159,14 @@ test('fetchPlaylist pages through continuations and dedupes', async () => {
   const body = JSON.parse(fetchImpl.calls[1].body);
   assert.equal(body.continuation, 'CONTINUATION_TOKEN_PAGE_2');
   assert.equal(body.context.client.clientVersion, '2.20260901.00.00');
+});
+
+test('fetchPlaylist works end to end against the current lockupViewModel page shape', async () => {
+  const fetchImpl = stubFetch({ page: LOCKUP_PAGE_HTML });
+  const result = await run(fetchImpl);
+  assert.equal(result.title, 'Essence of linear algebra');
+  assert.deepEqual(result.videoIds, [...PAGE_ONE, 'ffffffffff6', 'gggggggggg7']);
+  assert.equal(result.truncated, false);
 });
 
 test('fetchPlaylist reports an HTTP failure in words a user can act on', async () => {

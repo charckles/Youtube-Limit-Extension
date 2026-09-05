@@ -6,7 +6,7 @@
   "scripts": {
     "test": "node --test test/*.test.js",
     "icons": "node scripts/make-icons.js",
-    "fixtures": "node test/fixtures/make-fixture.js && node test/fixtures/make-continuation.js"
+    "fixtures": "node test/fixtures/make-fixture.js && node test/fixtures/make-fixture-lockup.js && node test/fixtures/make-continuation.js"
   },
   "license": "MIT"
 }

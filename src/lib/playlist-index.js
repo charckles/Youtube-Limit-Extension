@@ -107,6 +107,17 @@
         videoIds.push(video.videoId);
       }
 
+      // YouTube migrated playlist pages to this "lockup" component sometime in
+      // 2025: the same list, but each item is a lockupViewModel carrying the
+      // video id as contentId rather than a playlistVideoRenderer.videoId.
+      // Both are checked so this survives YouTube reverting or A/B testing.
+      var lockup = current.lockupViewModel;
+      if (lockup && lockup.contentType === 'LOCKUP_CONTENT_TYPE_VIDEO' &&
+          typeof lockup.contentId === 'string' && !seen.has(lockup.contentId)) {
+        seen.add(lockup.contentId);
+        videoIds.push(lockup.contentId);
+      }
+
       if (!continuation) {
         var command = current.continuationCommand;
         if (command && typeof command.token === 'string') continuation = command.token;
