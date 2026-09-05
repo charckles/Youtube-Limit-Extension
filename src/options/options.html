@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>YouTube Limit</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>YouTube Limit</h1>
+      <p class="lede">
+        Nothing plays on YouTube unless it belongs to one of the playlists below.
+        Adding a playlist scrapes its full contents so its videos also work when
+        opened on their own, outside the playlist.
+      </p>
+    </header>
+
+    <section>
+      <h2>Whitelisted playlists</h2>
+      <form id="add-form" autocomplete="off">
+        <input id="add-input" type="text" spellcheck="false"
+               placeholder="Paste a playlist URL, or a playlist ID starting with PL…">
+        <button type="submit" id="add-button">Add</button>
+      </form>
+      <p id="add-status" class="status" hidden></p>
+
+      <table id="playlist-table" hidden>
+        <thead>
+          <tr>
+            <th>Playlist</th>
+            <th class="num">Videos</th>
+            <th>Last indexed</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="playlist-rows"></tbody>
+      </table>
+      <p id="playlist-empty" class="muted">No playlists yet — every video is blocked until you add one.</p>
+
+      <p class="row-actions">
+        <button type="button" id="refresh-all" class="secondary">Re-index everything now</button>
+        <span id="refresh-status" class="muted"></span>
+      </p>
+    </section>
+
+    <section>
+      <h2>Settings</h2>
+      <label class="toggle">
+        <input type="checkbox" id="blockShorts">
+        <span><strong>Block Shorts entirely</strong><em>Shorts aren't in ordinary playlists, so there's nothing to whitelist them against.</em></span>
+      </label>
+      <label class="toggle">
+        <input type="checkbox" id="blankHomeFeed">
+        <span><strong>Blank the home feed</strong><em>Replaces the recommendation grid on youtube.com with a short note.</em></span>
+      </label>
+      <label class="toggle">
+        <input type="checkbox" id="hideRecommendations">
+        <span><strong>Hide recommendations on the watch page</strong><em>Removes the "up next" sidebar, endscreen cards, and pause overlays.</em></span>
+      </label>
+      <label class="field">
+        <span>Re-index playlists every</span>
+        <select id="refreshIntervalHours">
+          <option value="1">hour</option>
+          <option value="6">6 hours</option>
+          <option value="12">12 hours</option>
+          <option value="24">day</option>
+          <option value="168">week</option>
+        </select>
+      </label>
+    </section>
+
+    <section>
+      <h2>Recently blocked</h2>
+      <p class="muted">What you keep bouncing off. If something here matters, add the playlist it belongs to.</p>
+      <ul id="block-log"></ul>
+      <p class="row-actions">
+        <button type="button" id="clear-log" class="secondary">Clear log</button>
+      </p>
+    </section>
+  </main>
+
+  <script src="../lib/policy.js"></script>
+  <script src="../lib/storage.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

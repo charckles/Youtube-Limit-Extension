@@ -1,0 +1,53 @@
+/*
+ * Declarative CSS, applied by the content script at document_start — before any
+ * page script runs. That ordering is what lets the "pending" rule hide the page
+ * before YouTube has a chance to paint a frame or build a player.
+ *
+ * Every rule is gated on an attribute that guard.js sets, so this file is inert
+ * until the script opts a page in.
+ */
+
+/* Decision in flight: show nothing at all. */
+html[data-ytl="pending"] body {
+  display: none !important;
+}
+
+/* Blocked: body renders (so the overlay has a host) but everything YouTube put
+   in it is hidden. */
+html[data-ytl="blocked"] body > *:not(#ytl-overlay-host) {
+  display: none !important;
+}
+
+html[data-ytl="blocked"] {
+  background: #0f0f0f !important;
+}
+
+/* --- Declutter -------------------------------------------------------- */
+
+html[data-ytl-home="blank"] ytd-browse[page-subtype="home"] ytd-rich-grid-renderer,
+html[data-ytl-home="blank"] ytd-browse[page-subtype="home"] ytd-feed-filter-chip-bar-renderer,
+html[data-ytl-home="blank"] ytd-browse[page-subtype="home"] #contents.ytd-rich-grid-renderer {
+  display: none !important;
+}
+
+html[data-ytl-home="blank"] ytd-browse[page-subtype="home"] #primary::before,
+html[data-ytl-home="blank"] ytd-browse[page-subtype="home"] > #contents::before {
+  content: "YouTube Limit — the home feed is off. Open a whitelisted playlist instead.";
+  display: block;
+  padding: 64px 24px;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #909090;
+}
+
+html[data-ytl-recs="hide"] #secondary,
+html[data-ytl-recs="hide"] #related,
+html[data-ytl-recs="hide"] ytd-watch-next-secondary-results-renderer,
+html[data-ytl-recs="hide"] ytd-compact-video-renderer,
+html[data-ytl-recs="hide"] .ytp-endscreen-content,
+html[data-ytl-recs="hide"] .ytp-ce-element,
+html[data-ytl-recs="hide"] .ytp-suggestion-set,
+html[data-ytl-recs="hide"] .ytp-pause-overlay {
+  display: none !important;
+}

@@ -1,0 +1,12 @@
+{
+  "name": "youtube-limit-extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chromium extension that blocks every YouTube video outside a whitelisted playlist.",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "icons": "node scripts/make-icons.js",
+    "fixtures": "node test/fixtures/make-fixture.js && node test/fixtures/make-continuation.js"
+  },
+  "license": "MIT"
+}

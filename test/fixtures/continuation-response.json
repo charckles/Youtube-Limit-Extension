@@ -1,0 +1,50 @@
+{
+  "responseContext": {
+    "visitorData": "Cgt0ZXN0"
+  },
+  "onResponseReceivedActions": [
+    {
+      "appendContinuationItemsAction": {
+        "targetId": "VL-playlist",
+        "continuationItems": [
+          {
+            "playlistVideoRenderer": {
+              "videoId": "ffffffffff6",
+              "title": {
+                "runs": [
+                  {
+                    "text": "Page two, one"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "playlistVideoRenderer": {
+              "videoId": "gggggggggg7",
+              "title": {
+                "runs": [
+                  {
+                    "text": "Page two, two"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "playlistVideoRenderer": {
+              "videoId": "aaaaaaaaaa1",
+              "title": {
+                "runs": [
+                  {
+                    "text": "Repeat"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

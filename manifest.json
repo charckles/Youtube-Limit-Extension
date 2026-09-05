@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube Limit",
+  "version": "0.1.0",
+  "description": "Nothing on YouTube plays unless it belongs to a playlist you have whitelisted.",
+  "permissions": ["storage", "alarms", "unlimitedStorage"],
+  "host_permissions": ["*://*.youtube.com/*"],
+  "background": {
+    "service_worker": "src/background/worker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://www.youtube.com/*", "*://m.youtube.com/*"],
+      "js": ["src/lib/policy.js", "src/content/guard.js"],
+      "css": ["src/content/guard.css"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
+  "options_ui": {
+    "page": "src/options/options.html",
+    "open_in_tab": true
+  },
+  "action": {
+    "default_title": "YouTube Limit settings"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
