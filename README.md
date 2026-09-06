@@ -1,4 +1,4 @@
-# YouTube Limit
+# StudyGate
 
 A Chromium extension that inverts YouTube's default: **nothing plays unless it
 belongs to a playlist you have whitelisted.** Built for Brave, works in Chrome

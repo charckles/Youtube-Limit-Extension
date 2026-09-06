@@ -197,7 +197,7 @@
       '  <p class="title"></p>',
       '  <p class="meta"></p>',
       '  <p class="quote"></p>',
-      '  <button type="button">Open YouTube Limit settings</button>',
+      '  <button type="button">Open StudyGate settings</button>',
       '  <p class="note">Whitelist this video’s playlist in settings if you actually need it.</p>',
       '</div></div>'
     ].join('\n');
@@ -230,7 +230,7 @@
     if (!overlayRoot) buildOverlay();
 
     var reason = result.reason === 'unavailable'
-      ? 'YouTube Limit could not read its settings, so nothing is allowed through.'
+      ? 'StudyGate could not read its settings, so nothing is allowed through.'
       : YTLPolicy.describeReason(result.reason);
     var quote = pickQuote();
 

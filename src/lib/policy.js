@@ -1,5 +1,5 @@
 /**
- * Pure decision logic for YouTube Limit.
+ * Pure decision logic for StudyGate.
  *
  * No I/O, no chrome.* calls, no DOM. Everything this file exports is a plain
  * function of its arguments, which is what makes the guard testable under
@@ -140,7 +140,7 @@
   };
 
   function describeReason(reason) {
-    return REASON_TEXT[reason] || 'Blocked by YouTube Limit.';
+    return REASON_TEXT[reason] || 'Blocked by StudyGate.';
   }
 
   var api = {
