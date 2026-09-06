@@ -23,6 +23,10 @@ test('parseLocation classifies YouTube URLs', () => {
   assert.equal(policy.parseLocation('https://www.youtube.com/').kind, 'other');
   assert.equal(policy.parseLocation('https://www.youtube.com/results?search_query=x').kind, 'other');
   assert.equal(policy.parseLocation('https://www.youtube.com/playlist?list=PLcourse').kind, 'other');
+  assert.equal(policy.parseLocation('https://www.youtube.com/feed/subscriptions').kind, 'subscriptions');
+  assert.equal(policy.parseLocation('https://www.youtube.com/feed/subscriptions/').kind, 'subscriptions');
+  // A sub-path under it is a different page entirely, not the feed itself.
+  assert.equal(policy.parseLocation('https://www.youtube.com/feed/trending').kind, 'other');
 });
 
 test('parseLocation pulls out ids, and rejects malformed ones', () => {
@@ -110,6 +114,25 @@ test('with shorts blocking off, shorts fall back to the normal whitelist', () =>
   const settings = { blockShorts: false };
   assert.equal(decide('https://www.youtube.com/shorts/aaaaaaaaaa1', { settings }).action, 'allow');
   assert.equal(decide('https://www.youtube.com/shorts/zzzzzzzzzz9', { settings }).action, 'block');
+});
+
+test('the subscriptions feed is untouched by default', () => {
+  const result = decide('https://www.youtube.com/feed/subscriptions');
+  assert.equal(result.action, 'allow');
+  assert.equal(result.reason, 'not-a-video-page');
+});
+
+test('the subscriptions feed blocks wholesale when the setting is on', () => {
+  const settings = { blockShorts: true, blockSubscriptions: true };
+  const result = decide('https://www.youtube.com/feed/subscriptions', { settings });
+  assert.equal(result.action, 'block');
+  assert.equal(result.reason, 'subscriptions');
+});
+
+test('subscriptions blocking has no bearing on shorts blocking or vice versa', () => {
+  const subsOnly = { blockShorts: false, blockSubscriptions: true };
+  assert.equal(decide('https://www.youtube.com/shorts/aaaaaaaaaa1', { settings: subsOnly }).action, 'allow');
+  assert.equal(decide('https://www.youtube.com/feed/subscriptions', { settings: subsOnly }).action, 'block');
 });
 
 test('a bare /watch is a redirect in flight, not a video', () => {

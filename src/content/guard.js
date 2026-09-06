@@ -65,6 +65,19 @@
     return kind === 'watch' || kind === 'shorts';
   }
 
+  /**
+   * Broader than looksLikeVideoPage: every page kind that decide() might
+   * actually block, so it's what pre-hiding and the fail-closed path key off
+   * of. looksLikeVideoPage stays narrow because it also answers a different
+   * question elsewhere — whether landing on a page counts as "this video is
+   * fine" for clearing suppressLingeringVideo, which the subscriptions feed
+   * has no bearing on.
+   */
+  function looksLikeGatedPage(href) {
+    var kind = YTLPolicy.parseLocation(href).kind;
+    return kind === 'watch' || kind === 'shorts' || kind === 'subscriptions';
+  }
+
   function setPending() {
     if (root.dataset.ytl === 'blocked') return;
     root.dataset.ytl = 'pending';
@@ -465,11 +478,10 @@
     verdict = null;
 
     if (!state) {
-      if (looksLikeVideoPage(href)) setPending();
+      if (looksLikeGatedPage(href)) setPending();
       return; // the state load will call back through here
     }
 
-    var loc = YTLPolicy.parseLocation(href);
     var result = YTLPolicy.decide({
       url: href,
       index: state.index,
@@ -478,14 +490,14 @@
     });
 
     if (result.action === 'block') applyBlock(result);
-    else applyAllow(loc.kind === 'watch' || loc.kind === 'shorts');
+    else applyAllow(looksLikeVideoPage(href));
   }
 
   function onNavigate() {
     if (location.href === currentUrl) return;
     // Re-hide before deciding: on an in-page navigation the old page is still
     // on screen and the new video is already being fetched.
-    if (looksLikeVideoPage(location.href)) {
+    if (looksLikeGatedPage(location.href)) {
       delete root.dataset.ytl;
       removeOverlay();
       setPending();
@@ -511,8 +523,8 @@
 
   // --- Wiring -----------------------------------------------------------
 
-  // Statement one: hide the page if it might play something.
-  if (looksLikeVideoPage(location.href)) setPending();
+  // Statement one: hide the page if it might get blocked.
+  if (looksLikeGatedPage(location.href)) setPending();
   currentUrl = location.href;
 
   // Runs for the life of the tab — see the comment on silenceTick().
@@ -520,7 +532,7 @@
   silenceTick();
 
   loadState().catch(function () {
-    if (looksLikeVideoPage(location.href)) applyBlock({ reason: 'unavailable', videoId: null });
+    if (looksLikeGatedPage(location.href)) applyBlock({ reason: 'unavailable', videoId: null });
   });
 
   // Whitelist a playlist and the page you're staring at should unblock itself.

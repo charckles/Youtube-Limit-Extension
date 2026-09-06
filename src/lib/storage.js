@@ -5,7 +5,7 @@
  * the design and it blows past sync's 100 KB quota after a few playlists.
  *
  * {
- *   settings:  { blockShorts, blankHomeFeed, hideRecommendations, refreshIntervalHours, homeMessage },
+ *   settings:  { blockShorts, blockSubscriptions, blankHomeFeed, hideRecommendations, refreshIntervalHours, homeMessage },
  *   playlists: { "<listId>": { title, addedAt, lastIndexedAt, videoCount, lastError } },
  *   index:     { "<videoId>": ["<listId>", ...] },
  *   blockLog:  [ { at, videoId, title, reason } ],  // newest first, capped
@@ -19,6 +19,7 @@
 
   var DEFAULT_SETTINGS = {
     blockShorts: true,
+    blockSubscriptions: false,
     blankHomeFeed: true,
     hideRecommendations: true,
     refreshIntervalHours: 12,

@@ -28,7 +28,7 @@
 
   /**
    * Classify a YouTube URL. Accepts absolute URLs or bare paths.
-   * kind is 'watch' (anything with a player), 'shorts', or 'other'.
+   * kind is 'watch' (anything with a player), 'shorts', 'subscriptions', or 'other'.
    */
   function parseLocation(rawUrl) {
     var url;
@@ -53,6 +53,8 @@
       // Both render a player on youtube.com itself, so they get gated like /watch.
       kind = 'watch';
       videoId = path.slice(path.indexOf('/', 1) + 1).split('/')[0] || null;
+    } else if (path === '/feed/subscriptions') {
+      kind = 'subscriptions';
     }
 
     // Keep the raw value around: "there was a v param but it was malformed" has
@@ -69,7 +71,7 @@
    *
    * index    — { videoId: [playlistId, ...] }
    * playlists— { playlistId: {...} }  (presence is what matters)
-   * settings — { blockShorts }
+   * settings — { blockShorts, blockSubscriptions }
    */
   function decide(input) {
     var settings = (input && input.settings) || {};
@@ -87,8 +89,17 @@
       };
     }
 
-    // 1. Anything that isn't a player page is none of our business.
+    // 1. Anything that isn't a player page is none of our business — except
+    //    the subscriptions feed, which gets its own opt-in block below since
+    //    it's a feed of arbitrary videos with no whitelist signal at all.
     if (loc.kind === 'other') return verdict('allow', 'not-a-video-page');
+
+    // 1b. The subscriptions tab, when the user has chosen to block it outright.
+    if (loc.kind === 'subscriptions') {
+      return settings.blockSubscriptions
+        ? verdict('block', 'subscriptions')
+        : verdict('allow', 'not-a-video-page');
+    }
 
     // 2. Shorts are blocked wholesale when enabled — the format can't be
     //    meaningfully whitelisted, since Shorts aren't in ordinary playlists.
@@ -136,6 +147,7 @@
 
   var REASON_TEXT = {
     'shorts': 'Shorts are blocked.',
+    'subscriptions': 'The subscriptions feed is blocked.',
     'not-whitelisted': 'This video is not in any playlist you have whitelisted.'
   };
 

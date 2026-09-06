@@ -116,6 +116,7 @@
 
   function renderSettings(settings) {
     $('blockShorts').checked = settings.blockShorts;
+    $('blockSubscriptions').checked = settings.blockSubscriptions;
     $('blankHomeFeed').checked = settings.blankHomeFeed;
     $('hideRecommendations').checked = settings.hideRecommendations;
     $('refreshIntervalHours').value = String(settings.refreshIntervalHours);
@@ -264,7 +265,7 @@
     });
   });
 
-  ['blockShorts', 'blankHomeFeed', 'hideRecommendations'].forEach(function (key) {
+  ['blockShorts', 'blockSubscriptions', 'blankHomeFeed', 'hideRecommendations'].forEach(function (key) {
     $(key).addEventListener('change', function () {
       var patch = {};
       patch[key] = $(key).checked;
