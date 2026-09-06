@@ -69,7 +69,8 @@
         var warn = document.createElement('span');
         warn.className = 'warn';
         warn.textContent = 'Only partly indexed — videos past this point still block ' +
-          'unless you open them from the playlist itself.';
+          'unless you open them from the playlist itself.' +
+          (meta.truncatedReason ? ' (' + meta.truncatedReason + ')' : '');
         nameCell.appendChild(warn);
       }
       tr.appendChild(nameCell);
@@ -238,7 +239,10 @@
       var meta = result.meta;
       setStatus(status,
         'Added "' + meta.title + '" — ' + meta.videoCount + ' videos indexed.' +
-        (meta.truncated ? ' Indexing stopped early, so the tail of this playlist may still block.' : ''),
+        (meta.truncated
+          ? ' Indexing stopped early, so the tail of this playlist may still block.' +
+            (meta.truncatedReason ? ' (' + meta.truncatedReason + ')' : '')
+          : ''),
         false);
       $('add-input').value = '';
       return load();

@@ -55,6 +55,7 @@ function indexPlaylist(listId) {
         videoCount: result.videoIds.length,
         lastIndexedAt: Date.now(),
         truncated: result.truncated,
+        truncatedReason: result.truncatedReason || null,
         lastError: null
       });
     }).then(function (meta) {

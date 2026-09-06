@@ -199,6 +199,8 @@
         // First page still counts; say so rather than silently returning a
         // partial index that would hard-block the rest of the playlist.
         state.truncated = true;
+        state.truncatedReason = 'Could not find YouTube’s internal API key on the page, ' +
+          'so continuation paging could not run.';
         return state;
       }
 
@@ -224,7 +226,8 @@
         title: state.title,
         videoIds: state.videoIds,
         pages: state.pages,
-        truncated: state.truncated
+        truncated: state.truncated,
+        truncatedReason: state.truncatedReason || null
       };
     });
   }
@@ -235,10 +238,13 @@
       // YouTube handed back a token we already redeemed. We cannot advance, and
       // there may well be more videos behind it, so say the index is partial.
       state.truncated = true;
+      state.truncatedReason = 'YouTube repeated a continuation token instead of advancing, ' +
+        'after ' + state.pages + ' page(s).';
       return Promise.resolve(state);
     }
     if (state.pages >= maxPages) {
       state.truncated = true;
+      state.truncatedReason = 'Reached the ' + maxPages + '-page safety cap.';
       return Promise.resolve(state);
     }
     state.seenTokens.add(token);
@@ -270,6 +276,8 @@
       if (!response.ok) {
         // Partial data is still useful; flag it so the options page can warn.
         state.truncated = true;
+        state.truncatedReason = 'The next-page request failed with HTTP ' + response.status +
+          ' after ' + state.pages + ' page(s).';
         return null;
       }
       return response.json();
@@ -286,8 +294,10 @@
 
       if (!page.continuation) return state;
       return pageThrough(state, page.continuation, config, doFetch, maxPages, pageDelay);
-    }).catch(function () {
+    }).catch(function (err) {
       state.truncated = true;
+      state.truncatedReason = 'The next-page request failed after ' + state.pages + ' page(s): ' +
+        (err && err.message ? err.message : String(err));
       return state;
     });
   }

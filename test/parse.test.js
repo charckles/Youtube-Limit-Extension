@@ -212,6 +212,10 @@ test('a continuation failure yields partial data flagged as truncated', async ()
   const result = await run(stubFetch({ pages: [new Error('network down')] }));
   assert.deepEqual(result.videoIds, PAGE_ONE);
   assert.equal(result.truncated, true);
+  // The reason has to be specific enough to actually debug from — a bare
+  // "truncated: true" with no detail is exactly what made a real regression
+  // (every playlist showing partial) impossible to diagnose without guessing.
+  assert.match(result.truncatedReason, /network down/);
 });
 
 test('a missing InnerTube config truncates instead of silently stopping', async () => {
@@ -219,6 +223,7 @@ test('a missing InnerTube config truncates instead of silently stopping', async 
   const result = await run(stubFetch({ page }));
   assert.deepEqual(result.videoIds, PAGE_ONE);
   assert.equal(result.truncated, true);
+  assert.match(result.truncatedReason, /API key/i);
 });
 
 test('fetchPlaylist stops at the page cap and says so', async () => {
@@ -243,6 +248,7 @@ test('fetchPlaylist stops at the page cap and says so', async () => {
   const result = await run(stubFetch({ pages: [1, 2, 3, 4, 5].map(endless) }), { maxPages: 3 });
   assert.equal(result.truncated, true, 'hitting the cap must be reported, not hidden');
   assert.equal(result.pages, 3);
+  assert.match(result.truncatedReason, /safety cap/);
 });
 
 test('a repeated continuation token terminates instead of looping forever', async () => {
@@ -265,4 +271,12 @@ test('a repeated continuation token terminates instead of looping forever', asyn
   const result = await run(stubFetch({ pages: [sameToken, sameToken, sameToken] }));
   assert.deepEqual(result.videoIds, [...PAGE_ONE, 'hhhhhhhhhh8']);
   assert.equal(result.truncated, true, 'a token we cannot advance past means a partial index');
+  assert.match(result.truncatedReason, /repeated a continuation token/);
+});
+
+test('a non-ok continuation response reports the actual HTTP status', async () => {
+  const result = await run(stubFetch({ pages: [] })); // no page queued => 500 from the stub
+  assert.deepEqual(result.videoIds, PAGE_ONE);
+  assert.equal(result.truncated, true);
+  assert.match(result.truncatedReason, /HTTP 500/);
 });
