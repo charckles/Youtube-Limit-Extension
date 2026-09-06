@@ -3,10 +3,19 @@
   "name": "StudyGate",
   "version": "1.0.0",
   "description": "A hard block on every YouTube video, except playlists you whitelist for courses and studying.",
-  "permissions": ["storage", "alarms", "unlimitedStorage"],
+  "permissions": ["storage", "alarms", "unlimitedStorage", "declarativeNetRequest"],
   "host_permissions": ["*://*.youtube.com/*"],
   "background": {
     "service_worker": "src/background/worker.js"
+  },
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "ruleset_1",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
   },
   "content_scripts": [
     {

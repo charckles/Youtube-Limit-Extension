@@ -16,6 +16,16 @@
   var PAGE_DELAY_MS = 250;     // be a polite client
   var INNERTUBE_URL = 'https://www.youtube.com/youtubei/v1/browse';
 
+  // This endpoint 403s a request carrying the Origin a browser automatically
+  // stamps on a fetch from the extension's own service worker
+  // (chrome-extension://<id>) — confirmed against a real playlist that was
+  // paging fine from a plain Node script (no Origin header at all) but
+  // failing with exactly this status once running as the actual extension.
+  // rules.json rewrites Origin/Referer to a real youtube.com value for this
+  // one endpoint before the request leaves the browser; see manifest.json's
+  // declarative_net_request entry. Nothing here sends that header itself —
+  // it's set at the network layer, outside this file's control.
+
   /**
    * Extract a balanced JSON object starting at the first `{` at or after `from`.
    * Brace counting rather than a regex, because the blob is megabytes of nested
