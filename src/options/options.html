@@ -71,6 +71,23 @@
     </section>
 
     <section>
+      <h2>Blanked home feed</h2>
+      <p class="muted">Shown in place of the home feed's recommendation grid.</p>
+      <label class="field stacked">
+        <span>Message</span>
+        <textarea id="home-message" rows="2" spellcheck="true"></textarea>
+      </label>
+
+      <h3>Checklist</h3>
+      <p class="muted">Things to do instead — shown with checkboxes on the blanked home feed.</p>
+      <ul id="checklist-rows"></ul>
+      <form id="checklist-add-form" autocomplete="off">
+        <input id="checklist-add-input" type="text" spellcheck="true" placeholder="Add an item…">
+        <button type="submit">Add</button>
+      </form>
+    </section>
+
+    <section>
       <h2>Recently blocked</h2>
       <p class="muted">What you keep bouncing off. If something here matters, add the playlist it belongs to.</p>
       <ul id="block-log"></ul>

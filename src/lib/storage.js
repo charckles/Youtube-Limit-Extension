@@ -5,10 +5,11 @@
  * the design and it blows past sync's 100 KB quota after a few playlists.
  *
  * {
- *   settings:  { blockShorts, blankHomeFeed, hideRecommendations, refreshIntervalHours },
+ *   settings:  { blockShorts, blankHomeFeed, hideRecommendations, refreshIntervalHours, homeMessage },
  *   playlists: { "<listId>": { title, addedAt, lastIndexedAt, videoCount, lastError } },
  *   index:     { "<videoId>": ["<listId>", ...] },
- *   blockLog:  [ { at, videoId, title, reason } ]   // newest first, capped
+ *   blockLog:  [ { at, videoId, title, reason } ],  // newest first, capped
+ *   checklist: [ { id, text, done } ]                // shown on the blanked home feed
  * }
  */
 (function (root) {
@@ -20,8 +21,17 @@
     blockShorts: true,
     blankHomeFeed: true,
     hideRecommendations: true,
-    refreshIntervalHours: 12
+    refreshIntervalHours: 12,
+    homeMessage: 'The home feed is off. Open a whitelisted playlist instead.'
   };
+
+  // Only used the very first time nothing has been stored yet — after that,
+  // whatever the user has (including an emptied-out list) is the real value.
+  var DEFAULT_CHECKLIST = [
+    { id: 'c1', text: 'Read a chapter of a book', done: false },
+    { id: 'c2', text: 'Go for a short walk', done: false },
+    { id: 'c3', text: 'Work on a side project', done: false }
+  ];
 
   function area() {
     return chrome.storage.local;
@@ -33,7 +43,8 @@
         settings: Object.assign({}, DEFAULT_SETTINGS, raw.settings || {}),
         playlists: raw.playlists || {},
         index: raw.index || {},
-        blockLog: raw.blockLog || []
+        blockLog: raw.blockLog || [],
+        checklist: raw.checklist === undefined ? DEFAULT_CHECKLIST.slice() : raw.checklist
       };
     });
   }
@@ -135,9 +146,29 @@
     return area().set({ blockLog: [] });
   }
 
+  function getChecklist() {
+    return area().get('checklist').then(function (raw) {
+      return raw.checklist === undefined ? DEFAULT_CHECKLIST.slice() : raw.checklist;
+    });
+  }
+
+  function setChecklist(items) {
+    return area().set({ checklist: items }).then(function () { return items; });
+  }
+
+  function toggleChecklistItem(id) {
+    return getChecklist().then(function (items) {
+      var next = items.map(function (item) {
+        return item.id === id ? Object.assign({}, item, { done: !item.done }) : item;
+      });
+      return setChecklist(next);
+    });
+  }
+
   var api = {
     BLOCK_LOG_MAX: BLOCK_LOG_MAX,
     DEFAULT_SETTINGS: DEFAULT_SETTINGS,
+    DEFAULT_CHECKLIST: DEFAULT_CHECKLIST,
     getAll: getAll,
     getPolicyState: getPolicyState,
     getSettings: getSettings,
@@ -147,7 +178,10 @@
     replacePlaylistIndex: replacePlaylistIndex,
     removePlaylist: removePlaylist,
     appendBlockLog: appendBlockLog,
-    clearBlockLog: clearBlockLog
+    clearBlockLog: clearBlockLog,
+    getChecklist: getChecklist,
+    setChecklist: setChecklist,
+    toggleChecklistItem: toggleChecklistItem
   };
 
   root.YTLStorage = api;

@@ -119,6 +119,57 @@
     $('blankHomeFeed').checked = settings.blankHomeFeed;
     $('hideRecommendations').checked = settings.hideRecommendations;
     $('refreshIntervalHours').value = String(settings.refreshIntervalHours);
+    // Only overwrite the textarea if the user isn't actively typing in it —
+    // otherwise a storage-change reload triggered by this very edit could
+    // clobber a keystroke mid-sentence.
+    if (document.activeElement !== $('home-message')) $('home-message').value = settings.homeMessage;
+  }
+
+  function makeChecklistId() {
+    return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+
+  function renderChecklist(items) {
+    var list = $('checklist-rows');
+    list.textContent = '';
+
+    items.forEach(function (item) {
+      var li = document.createElement('li');
+
+      var checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = Boolean(item.done);
+      checkbox.addEventListener('change', function () {
+        YTLStorage.toggleChecklistItem(item.id).then(load);
+      });
+
+      var text = document.createElement('input');
+      text.type = 'text';
+      text.value = item.text;
+      text.addEventListener('change', function () {
+        YTLStorage.getChecklist().then(function (current) {
+          var next = current.map(function (i) {
+            return i.id === item.id ? Object.assign({}, i, { text: text.value }) : i;
+          });
+          return YTLStorage.setChecklist(next);
+        });
+      });
+
+      var remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'link';
+      remove.textContent = 'Remove';
+      remove.addEventListener('click', function () {
+        YTLStorage.getChecklist().then(function (current) {
+          return YTLStorage.setChecklist(current.filter(function (i) { return i.id !== item.id; }));
+        }).then(load);
+      });
+
+      li.appendChild(checkbox);
+      li.appendChild(text);
+      li.appendChild(remove);
+      list.appendChild(li);
+    });
   }
 
   function renderBlockLog(log) {
@@ -155,6 +206,7 @@
     return YTLStorage.getAll().then(function (state) {
       renderPlaylists(state.playlists);
       renderSettings(state.settings);
+      renderChecklist(state.checklist);
       renderBlockLog(state.blockLog);
     });
   }
@@ -222,6 +274,23 @@
 
   $('refreshIntervalHours').addEventListener('change', function () {
     send({ type: 'setRefreshInterval', hours: Number($('refreshIntervalHours').value) });
+  });
+
+  $('home-message').addEventListener('change', function () {
+    YTLStorage.patchSettings({ homeMessage: $('home-message').value });
+  });
+
+  $('checklist-add-form').addEventListener('submit', function (event) {
+    event.preventDefault();
+    var input = $('checklist-add-input');
+    var text = input.value.trim();
+    if (!text) return;
+    YTLStorage.getChecklist().then(function (current) {
+      return YTLStorage.setChecklist(current.concat({ id: makeChecklistId(), text: text, done: false }));
+    }).then(function () {
+      input.value = '';
+      return load();
+    });
   });
 
   $('clear-log').addEventListener('click', function () {

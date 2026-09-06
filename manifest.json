@@ -11,7 +11,7 @@
   "content_scripts": [
     {
       "matches": ["*://www.youtube.com/*", "*://m.youtube.com/*"],
-      "js": ["src/lib/policy.js", "src/content/guard.js"],
+      "js": ["src/lib/policy.js", "src/lib/storage.js", "src/content/guard.js"],
       "css": ["src/content/guard.css"],
       "run_at": "document_start",
       "all_frames": false

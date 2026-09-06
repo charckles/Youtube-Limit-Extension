@@ -30,16 +30,9 @@ html[data-ytl-home="blank"] ytd-browse[page-subtype="home"] #contents.ytd-rich-g
   display: none !important;
 }
 
-html[data-ytl-home="blank"] ytd-browse[page-subtype="home"] #primary::before,
-html[data-ytl-home="blank"] ytd-browse[page-subtype="home"] > #contents::before {
-  content: "YouTube Limit — the home feed is off. Open a whitelisted playlist instead.";
-  display: block;
-  padding: 64px 24px;
-  text-align: center;
-  font-size: 14px;
-  line-height: 1.6;
-  color: #909090;
-}
+/* The actual message + checklist is a real DOM panel guard.js inserts (it
+   needs to be editable text and clickable checkboxes, which a pseudo-element
+   can't be) — see #ytl-home-panel-host. This file only ever hides the feed. */
 
 html[data-ytl-recs="hide"] #secondary,
 html[data-ytl-recs="hide"] #related,

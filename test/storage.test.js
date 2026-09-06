@@ -94,6 +94,40 @@ test('the block log is newest first and capped', async () => {
   assert.equal(log[0].at, storage.BLOCK_LOG_MAX + 9, 'newest entry is first');
 });
 
+test('getChecklist seeds starter items only when nothing has ever been stored', async () => {
+  installFakeChrome();
+  const seeded = await storage.getChecklist();
+  assert.deepEqual(seeded, storage.DEFAULT_CHECKLIST);
+});
+
+test('an explicitly emptied checklist stays empty rather than reseeding', async () => {
+  // The seeding check is "was checklist ever set", not "is it non-empty" —
+  // otherwise clearing every item would just bring the starter list back.
+  installFakeChrome({ checklist: [] });
+  assert.deepEqual(await storage.getChecklist(), []);
+});
+
+test('toggleChecklistItem flips only the matching item', async () => {
+  const read = installFakeChrome({
+    checklist: [
+      { id: 'a', text: 'A', done: false },
+      { id: 'b', text: 'B', done: false },
+    ],
+  });
+  await storage.toggleChecklistItem('a');
+  assert.equal(read().checklist.find((i) => i.id === 'a').done, true);
+  assert.equal(read().checklist.find((i) => i.id === 'b').done, false);
+
+  await storage.toggleChecklistItem('a');
+  assert.equal(read().checklist.find((i) => i.id === 'a').done, false, 'toggling again flips back');
+});
+
+test('getSettings defaults homeMessage for existing users who never set one', async () => {
+  installFakeChrome({ settings: { blockShorts: false } });
+  const settings = await storage.getSettings();
+  assert.equal(settings.homeMessage, storage.DEFAULT_SETTINGS.homeMessage);
+});
+
 test('reloading a blocked page updates the log entry instead of flooding it', async () => {
   const read = installFakeChrome();
   await storage.appendBlockLog({ at: 1, videoId: 'vid00000001', reason: 'not-whitelisted' });
