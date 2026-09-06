@@ -33,6 +33,16 @@
   // exactly the video this extension exists to stop.
   var suppressLingeringVideo = false;
 
+  /** Keeps the JS flag, the CSS hook, and the miniplayer's own visibility in sync. */
+  function setSuppressLingeringVideo(value) {
+    suppressLingeringVideo = value;
+    if (value) root.dataset.ytlMiniplayer = 'hide';
+    else {
+      delete root.dataset.ytlMiniplayer;
+      restoreMiniplayer();
+    }
+  }
+
   /**
    * Fire-and-forget message to the worker.
    *
@@ -85,6 +95,25 @@
     }
   }
 
+  /**
+   * YouTube auto-activates its own floating miniplayer for whatever video was
+   * loaded when you navigate away from its watch page — including a video we
+   * just blocked. Muting/stripping the <video> (above) stops it from actually
+   * playing, but the floating widget itself still visually pops out unless we
+   * also hide it. Gated by the same guard.css attribute as everything else
+   * here, plus a direct inline-style hide as a second line of defence in case
+   * that selector ever stops matching YouTube's markup.
+   */
+  function hideMiniplayerIfPresent() {
+    var mini = document.querySelector('ytd-miniplayer');
+    if (mini && mini.style.display !== 'none') mini.style.display = 'none';
+  }
+
+  function restoreMiniplayer() {
+    var mini = document.querySelector('ytd-miniplayer');
+    if (mini && mini.style.display === 'none') mini.style.removeProperty('display');
+  }
+
   // Runs continuously for the life of the tab rather than starting/stopping
   // around individual decisions — a persisted YouTube miniplayer can keep a
   // <video> alive on pages this script would otherwise consider none of its
@@ -92,6 +121,7 @@
   // page". The check itself is cheap (a handful of DOM property reads).
   function silenceTick() {
     var enforcing = suppressLingeringVideo || (verdict && verdict.action === 'block');
+    if (enforcing) hideMiniplayerIfPresent();
     eachVideo(function (video) {
       if (enforcing) {
         neutralize(video);
@@ -372,7 +402,7 @@
 
   function applyBlock(result) {
     verdict = { action: 'block', reason: result.reason, videoId: result.videoId };
-    suppressLingeringVideo = true;
+    setSuppressLingeringVideo(true);
     if (failsafeTimer) { clearTimeout(failsafeTimer); failsafeTimer = null; }
     whenBodyReady(function () {
       root.dataset.ytl = 'blocked';
@@ -411,7 +441,7 @@
       // Only a genuine "this video is fine" verdict lifts the enforcement
       // guard. Landing on some other page (e.g. the playlist you went "back"
       // to) must never lift it on its own — see suppressLingeringVideo above.
-      suppressLingeringVideo = false;
+      setSuppressLingeringVideo(false);
     }
     resumePausedVideos();
   }
